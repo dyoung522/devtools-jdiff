@@ -1,5 +1,5 @@
 require "devtools"
-require "jira_diff/globals"
+require "jira_diff/version"
 require "jira_diff/options"
 require "jira_diff/stories"
 

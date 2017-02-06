@@ -5,11 +5,11 @@ module JIRADiff
   class Stories
 
     def initialize(opts = Options.defaults)
-      @branches = _get_branches(opts[:master], opts[:source])
+      @branches  = _get_branches(opts[:master], opts[:source])
       @directory = opts[:directory] || '.'
-      @includes = _get_includes(opts.includes)
-      @options = opts
-      @stories = opts[:stories] || {}
+      @includes  = _get_includes(opts.includes)
+      @options   = opts
+      @stories   = opts[:stories] || {}
 
       _get_stories if @stories == {}
     end
@@ -43,7 +43,7 @@ module JIRADiff
 
     def master=(new_master)
       @stories[master] = []
-      @branches[0] = new_master
+      @branches[0]     = new_master
       _get_stories(new_master)
     end
 
@@ -77,14 +77,14 @@ module JIRADiff
 
     def diff
       stories = []
-      opts = @options
+      opts    = @options
 
       source_stories.each do |story|
         stories << story unless find(master, story.sha)
       end
 
-      opts.source = ['diff']
-      opts.stories = {'diff' => stories.flatten}
+      opts.source  = ['diff']
+      opts.stories = { 'diff' => stories.flatten }
       Stories.new opts
     end
 
@@ -112,6 +112,8 @@ module JIRADiff
       branches.to_a.each do |branch|
         puts "checking #{branch}" if @options.debug
         git.log(branch).each do |line|
+          line.strip!
+          next if line.empty?
           add_story branch, Story.new(line)
         end
       end

@@ -12,18 +12,18 @@ module JIRADiff
 
     def log(branch)
       raise RuntimeError, "Invalid branch: #{branch}" unless branch_valid? branch
-      run_command("\\git --no-pager log --no-merges --pretty='%H|%s' #{branch}")
+      run_command("\\git --no-pager log --no-merges --pretty='%H|%B\1' #{branch}").split("\1")
     end
 
     def branch_valid?(branch)
-      run_command("\\git branch --all --list #{branch}")[0] =~ /#{branch}/
+      run_command("\\git branch --all --list #{branch}").split("/n")[0] =~ /#{branch}/
     end
 
     private
 
     def run_command(cmd)
       Open3.popen3(cmd, chdir: @working_dir) do |_i, o, _e, _t|
-        o.read.split("\n")
+        o.read
       end
     end
   end

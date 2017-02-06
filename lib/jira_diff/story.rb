@@ -1,31 +1,28 @@
 module JIRADiff
 
   class Story
-    def initialize( story )
-      unless story =~ /\S+|\S+/
-        raise ArgumentError, "story must follow 'SHA|description' format"
+    def initialize(story)
+      unless story =~ /\w{40}|.*/
+        raise ArgumentError, 'story must follow "SHA|description" format'
       end
 
-      @sha, @description = story.split('|')
+      @sha, description      = story.split("|")
+      @stories, @description = split_story description
 
       raise ArgumentError if @sha.nil? || @description.nil?
     end
-    attr_reader :sha
 
-    def split_story( description = @description )
-      raise RuntimeError 'description cannot be blank' unless description
+    attr_reader :sha, :stories, :description
 
-      stories = []
-      story_pattern = /\[?(((SRMPRT|OSMCLOUD)\-\d+)|NO-JIRA)\]?[,:\-\s]+\s*(.*)$/
-      line = description.match(story_pattern)
+    def split_story(description)
+      raise RuntimeError, "description cannot be blank" unless description
 
-      if line.nil? # did not find a JIRA ticket pattern
-        stories.push 'NO-JIRA'
-        desc = description.strip
-      else
-        stories.push line.captures[0]
-        desc = line.captures[3].strip
-      end
+      stories       = []
+      story_pattern = /\[?(((SRMPRT|OSMCLOUD)\-\d+)|NO-JIRA)\]?[,:\-\s]?\s*(.*)$/m
+      line          = description.match(story_pattern)
+
+      stories.push line ? line.captures[0] : "JIRA-NOT-FOUND"
+      desc = (line ? line.captures[3] : description).strip
 
       # Perform recursion if there are multiple tickets in the description
       if desc =~ story_pattern
@@ -37,16 +34,12 @@ module JIRADiff
       [stories.flatten, desc]
     end
 
-    def tickets
-      (split_story)[0]
-    end
-
-    def desc
-      (split_story)[1]
+    def subject
+      @description.split("\n")[0].gsub(/[*:-]/, " ").strip rescue "No Description Provided"
     end
 
     def to_s
-      '[%07.07s] %s - %s' % [sha, tickets.join(', '), desc]
+      "[%07.07s] %-14s - %.80s" % [sha, stories.join(", "), subject]
     end
 
   end
